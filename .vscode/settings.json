@@ -1,9 +1,9 @@
 {
-	"vsicons.presets.nestjs": true,
 	"[typescript]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
 	},
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	}
+	},
+	"vsicons.presets.nestjs": true
 }
