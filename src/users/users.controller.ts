@@ -12,6 +12,7 @@ import { IUsersController } from './users.controller.interface';
 import { IUsersService } from './users.service.interface';
 import { sign } from 'jsonwebtoken';
 import { ConfigService } from '../config/config.service';
+import { AuthGuard } from '../common/auth.guard';
 
 @injectable()
 export class UserController extends BaseController implements IUsersController {
@@ -38,6 +39,7 @@ export class UserController extends BaseController implements IUsersController {
 				path: '/info',
 				method: 'get',
 				func: this.info,
+				middlewares: [new AuthGuard()],
 			},
 		]);
 	}
