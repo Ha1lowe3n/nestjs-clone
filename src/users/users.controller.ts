@@ -8,15 +8,17 @@ import { ILogger } from '../logger/logger.interface';
 import { TYPES } from '../types';
 import { UserRegisterDto } from './dto/user-register.dto';
 import { UserLoginDto } from './dto/user-login.dto';
-import { User } from './user.entity';
 import { IUsersController } from './users.controller.interface';
 import { IUsersService } from './users.service.interface';
+import { sign } from 'jsonwebtoken';
+import { ConfigService } from '../config/config.service';
 
 @injectable()
 export class UserController extends BaseController implements IUsersController {
 	constructor(
 		@inject(TYPES.ILogger) private loggerService: ILogger,
 		@inject(TYPES.UserService) private userService: IUsersService,
+		@inject(TYPES.ConfigService) private ConfigService: ConfigService,
 	) {
 		super(loggerService);
 		this.bindRoutes([
@@ -31,6 +33,11 @@ export class UserController extends BaseController implements IUsersController {
 				method: 'post',
 				func: this.login,
 				middlewares: [new ValidateMiddleware(UserLoginDto)],
+			},
+			{
+				path: '/info',
+				method: 'get',
+				func: this.info,
 			},
 		]);
 	}
@@ -56,6 +63,28 @@ export class UserController extends BaseController implements IUsersController {
 		if (!result) {
 			return next(new HttpError(401, 'Ошибка авторизации', '[login]'));
 		}
-		this.ok(res, 'Пользователь авторизирован');
+		const secret = this.ConfigService.get('JWT_SECRET');
+		const jwt = await this.signJWT(body.email, secret);
+		this.ok(res, { jwt });
+	}
+
+	async info({ user }: Request, res: Response, next: NextFunction): Promise<void> {
+		this.ok(res, { email: user });
+	}
+
+	private signJWT(email: string, secret: string): Promise<string> {
+		return new Promise((res, rej) => {
+			sign(
+				{ email, iat: Math.floor(Date.now() / 1000) },
+				secret,
+				{ algorithm: 'HS256' },
+				(err, token) => {
+					if (err) {
+						rej(err);
+					}
+					res(token as string);
+				},
+			);
+		});
 	}
 }
